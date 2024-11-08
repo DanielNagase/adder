@@ -43,7 +43,7 @@ class FileSet:
 class Processor:
 	'''Class for processing a FileSet'''
 
-	def process(self, fileSet):
+	def processChunk(self, fileSet):
 		if not fileSet.hasFiles():
 			return
 
@@ -62,7 +62,7 @@ def visitFile(entry, fileSet):
 
 	if not didAdd:
 		printProcessor = Processor()
-		printProcessor.process(fileSet)
+		printProcessor.processChunk(fileSet)
 
 def visitPath(path, fileSet):
 	entries = sorted(os.scandir(path), key=lambda entry: entry.name)
@@ -87,7 +87,7 @@ def main():
 
 	if fileSet.hasFiles():
 		printProcessor = Processor()
-		printProcessor.process(fileSet)
+		printProcessor.processChunk(fileSet)
 
 if __name__ == "__main__":
 	main()
