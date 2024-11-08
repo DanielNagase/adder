@@ -3,12 +3,14 @@ import argparse, os
 
 class FileSet:
 	'''Class for a set of files'''
-	# The unit for size is bytes
 	bytesPerMegabyte = 1024 * 1024
-	maximumSize = 300 * bytesPerMegabyte
-	maximumFileCount = 500
-	size = 0
-	paths = []
+
+	def __init__(self, maximumSize, maximumFileCount):
+		# The unit for size and maximumSize is bytes
+		self.size = 0
+		self.maximumSize = maximumSize * self.bytesPerMegabyte
+		self.maximumFileCount = maximumFileCount
+		self.paths = []
 
 	def canAdd(self, path, size):
 		newCount = len(self.paths) + 1
@@ -76,11 +78,11 @@ def main():
 		description='A tool for adding files to git in chunks'
 	)
 	parser.add_argument('path', help='Path to add')
-	parser.add_argument('-s', '--size', help='Maximum size of a chunk (in MB)')
-	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk')
+	parser.add_argument('-s', '--size', help='Maximum size of a chunk (in MB)', default=300)
+	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', default=500)
 
 	args = parser.parse_args()
-	fileSet = FileSet()
+	fileSet = FileSet(args.size, args.count)
 	visitPath(args.path, fileSet)
 
 	if fileSet.hasFiles():
