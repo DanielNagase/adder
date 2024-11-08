@@ -56,22 +56,21 @@ class Processor:
 
 		fileSet.reset()
 
-def visitFile(entry, fileSet):
-	statResult = entry.stat()
-	didAdd = fileSet.add(entry.path, statResult.st_size)
+	def visitPath(self, path, fileSet):
+		entries = sorted(os.scandir(path), key=lambda entry: entry.name)
 
-	if not didAdd:
-		printProcessor = Processor()
-		printProcessor.processChunk(fileSet)
+		for entry in entries:
+			if entry.is_dir():
+				self.visitPath(entry, fileSet)
+			elif entry.is_file():
+				self.visitFile(entry, fileSet)
 
-def visitPath(path, fileSet):
-	entries = sorted(os.scandir(path), key=lambda entry: entry.name)
+	def visitFile(self, entry, fileSet):
+		statResult = entry.stat()
+		didAdd = fileSet.add(entry.path, statResult.st_size)
 
-	for entry in entries:
-		if entry.is_dir():
-			visitPath(entry, fileSet)
-		elif entry.is_file():
-			visitFile(entry, fileSet)
+		if not didAdd:
+			self.processChunk(fileSet)
 
 def main():
 	parser = argparse.ArgumentParser(
@@ -83,11 +82,11 @@ def main():
 
 	args = parser.parse_args()
 	fileSet = FileSet(args.size, args.count)
-	visitPath(args.path, fileSet)
+	processor = Processor()
+	processor.visitPath(args.path, fileSet)
 
 	if fileSet.hasFiles():
-		printProcessor = Processor()
-		printProcessor.processChunk(fileSet)
+		processor.processChunk(fileSet)
 
 if __name__ == "__main__":
 	main()
