@@ -50,14 +50,18 @@ class Processor:
 		if not self.fileSet.hasFiles():
 			return
 
+		self.process()
+		self.fileSet.reset()
+
+	# Subclasses should override this method to process the
+	# fileset. The default implementation just prints each path.
+	def process(self):
 		sizeInMB = self.fileSet.getSize()
 		count = self.fileSet.getCount()
 		print("Processing Chunk: {0} files, {1:.2f} MB".format(count, sizeInMB))
 
 		for path in self.fileSet.paths:
 			print(" " + path)
-
-		self.fileSet.reset()
 
 	def processPath(self, path):
 		# first, visit paths recursively
