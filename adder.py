@@ -4,17 +4,39 @@ import argparse, os
 class FileSet:
 	'''Class for a set of files'''
 	# The unit for size is bytes
-	maximumSize = 300 * 1024 * 1024 # 300 MB
+	bytesPerMegabyte = 1024 * 1024
+	maximumSize = 300 * bytesPerMegabyte
 	maximumFileCount = 500
-	currentSize = 0
-	currentFileCount = 0
+	size = 0
+	paths = []
 
-	def __init__(self, diskSize, fileCount):
-		if (diskSize <= 0) or (fileCount <= 0):
-			raise ValueError('Disk size and file count must positive values!')
+	def canAdd(self, path, size):
+		newCount = len(self.paths) + 1
+		newSize = self.size + size
 
-		self.fileCount = fileCount
-		self.diskSize = diskSize
+		return newCount <= self.maximumFileCount and newSize <= self.maximumSize
+
+	def add(self, path, size):
+		if not self.canAdd(path, size):
+			return False
+
+		self.paths.append(path)
+		self.size = self.size + size
+
+		return True
+
+	def hasFiles(self):
+		return self.size > 0 and len(self.paths) > 0
+
+	def getSize(self):
+		return self.size / self.bytesPerMegabyte
+
+	def getCount(self):
+		return len(self.paths)
+
+	def reset(self):
+		self.size = 0
+		self.paths = []
 
 def visitFile(entry):
 	print(entry.path)
