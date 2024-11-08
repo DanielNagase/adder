@@ -43,34 +43,44 @@ class FileSet:
 class Processor:
 	'''Class for processing a FileSet'''
 
-	def processChunk(self, fileSet):
-		if not fileSet.hasFiles():
+	def __init__(self, size, count):
+		self.fileSet = FileSet(size, count)
+
+	def processChunk(self):
+		if not self.fileSet.hasFiles():
 			return
 
-		sizeInMB = fileSet.getSize()
-		count = fileSet.getCount()
+		sizeInMB = self.fileSet.getSize()
+		count = self.fileSet.getCount()
 		print("Processing Chunk: {0} files, {1:.2f} MB".format(count, sizeInMB))
 
-		for path in fileSet.paths:
+		for path in self.fileSet.paths:
 			print(" " + path)
 
-		fileSet.reset()
+		self.fileSet.reset()
 
-	def visitPath(self, path, fileSet):
+	def processPath(self, path):
+		# first, visit paths recursively
+		self.visitPath(path)
+		# after visiting paths recursively, process the
+		# last chunk to handle any remaining files
+		self.processChunk()
+
+	def visitPath(self, path):
 		entries = sorted(os.scandir(path), key=lambda entry: entry.name)
 
 		for entry in entries:
 			if entry.is_dir():
-				self.visitPath(entry, fileSet)
+				self.visitPath(entry)
 			elif entry.is_file():
-				self.visitFile(entry, fileSet)
+				self.visitFile(entry)
 
-	def visitFile(self, entry, fileSet):
+	def visitFile(self, entry):
 		statResult = entry.stat()
-		didAdd = fileSet.add(entry.path, statResult.st_size)
+		didAdd = self.fileSet.add(entry.path, statResult.st_size)
 
 		if not didAdd:
-			self.processChunk(fileSet)
+			self.processChunk()
 
 def main():
 	parser = argparse.ArgumentParser(
@@ -81,12 +91,8 @@ def main():
 	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', default=500)
 
 	args = parser.parse_args()
-	fileSet = FileSet(args.size, args.count)
-	processor = Processor()
-	processor.visitPath(args.path, fileSet)
-
-	if fileSet.hasFiles():
-		processor.processChunk(fileSet)
+	processor = Processor(args.size, args.count)
+	processor.processPath(args.path)
 
 if __name__ == "__main__":
 	main()
