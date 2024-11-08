@@ -86,6 +86,15 @@ class Processor:
 		if not didAdd:
 			self.processChunk()
 
+class GitProcessor(Processor):
+	'''Class for adding files to git by using the command line'''
+
+	def __init__(self, size, count):
+		super().__init__(size, count)
+
+	def process(self):
+		Processor.process(self)
+
 def main():
 	parser = argparse.ArgumentParser(
 		description='A tool for adding files to git in chunks'
