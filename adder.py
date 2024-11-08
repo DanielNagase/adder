@@ -38,17 +38,38 @@ class FileSet:
 		self.size = 0
 		self.paths = []
 
-def visitFile(entry):
-	print(entry.path)
+class Processor:
+	'''Class for processing a FileSet'''
 
-def visitPath(path):
+	def process(self, fileSet):
+		if not fileSet.hasFiles():
+			return
+
+		sizeInMB = fileSet.getSize()
+		count = fileSet.getCount()
+		print("Processing Chunk: {0} files, {1:.2f} MB".format(count, sizeInMB))
+
+		for path in fileSet.paths:
+			print(" " + path)
+
+		fileSet.reset()
+
+def visitFile(entry, fileSet):
+	statResult = entry.stat()
+	didAdd = fileSet.add(entry.path, statResult.st_size)
+
+	if not didAdd:
+		printProcessor = Processor()
+		printProcessor.process(fileSet)
+
+def visitPath(path, fileSet):
 	entries = sorted(os.scandir(path), key=lambda entry: entry.name)
 
 	for entry in entries:
 		if entry.is_dir():
-			visitPath(entry)
+			visitPath(entry, fileSet)
 		elif entry.is_file():
-			visitFile(entry)
+			visitFile(entry, fileSet)
 
 def main():
 	parser = argparse.ArgumentParser(
@@ -59,7 +80,12 @@ def main():
 	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk')
 
 	args = parser.parse_args()
-	visitPath(args.path)
+	fileSet = FileSet()
+	visitPath(args.path, fileSet)
+
+	if fileSet.hasFiles():
+		printProcessor = Processor()
+		printProcessor.process(fileSet)
 
 if __name__ == "__main__":
 	main()
