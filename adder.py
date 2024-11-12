@@ -43,8 +43,9 @@ class FileSet:
 class Processor:
 	'''Class for processing a FileSet'''
 
-	def __init__(self, size, count):
+	def __init__(self, size, count, isDryRun):
 		self.fileSet = FileSet(size, count)
+		self.isDryRun = isDryRun
 
 	def processChunk(self):
 		if not self.fileSet.hasFiles():
@@ -89,8 +90,8 @@ class Processor:
 class GitProcessor(Processor):
 	'''Class for adding files to git by using the command line'''
 
-	def __init__(self, size, count):
-		super().__init__(size, count)
+	def __init__(self, size, count, isDryRun):
+		super().__init__(size, count, isDryRun)
 
 	def process(self):
 		Processor.process(self)
@@ -102,9 +103,10 @@ def main():
 	parser.add_argument('path', help='Path to add')
 	parser.add_argument('-s', '--size', help='Maximum size of a chunk (in MB)', default=300)
 	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', default=500)
+	parser.add_argument('-n', '--dry-run', action='store_true', help='Print commands that would be run without running them')
 
 	args = parser.parse_args()
-	processor = Processor(args.size, args.count)
+	processor = Processor(args.size, args.count, args.dry_run)
 	processor.processPath(args.path)
 
 if __name__ == "__main__":
