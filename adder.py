@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, os
+import argparse, os, subprocess
 
 class FileSet:
 	'''Class for a set of files'''
@@ -93,8 +93,40 @@ class GitProcessor(Processor):
 	def __init__(self, size, count, isDryRun):
 		super().__init__(size, count, isDryRun)
 
+	def getAddCommandArgs(self):
+		command = ['git', 'add', '-f']
+
+		return command
+
+	def buildCommitCommandArgs(self, message):
+		command = ['git', 'commit', '-m']
+		command.append(message)
+
+		return command
+
+	def runCommand(self, args):
+		completedProcess = None
+
+		if self.isDryRun:
+			print(' '.join(args))
+
+			return
+
+		try:
+			completedProcess = subprocess.run(args, check=True, capture_output=True)
+		except subprocess.CalledProcessError as error:
+			errorString = error.stderr.decode()
+			print("Command failed:\n {}".format(errorString), end='')
+
 	def process(self):
-		Processor.process(self)
+		addArgs = self.getAddCommandArgs()
+
+		for path in self.fileSet.paths:
+			addArgs.append(path)
+			self.runCommand(addArgs)
+			addArgs.pop()
+
+		self.runCommand(self.buildCommitCommandArgs('Add files'))
 
 def main():
 	parser = argparse.ArgumentParser(
@@ -106,7 +138,7 @@ def main():
 	parser.add_argument('-n', '--dry-run', action='store_true', help='Print commands that would be run without running them')
 
 	args = parser.parse_args()
-	processor = Processor(args.size, args.count, args.dry_run)
+	processor = GitProcessor(args.size, args.count, args.dry_run)
 	processor.processPath(args.path)
 
 if __name__ == "__main__":
