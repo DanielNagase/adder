@@ -46,10 +46,26 @@ class Processor:
 	def __init__(self, size, count, isDryRun):
 		self.fileSet = FileSet(size, count)
 		self.isDryRun = isDryRun
+		self.shouldShowProgress = False
+
+	def setShouldShowProgress(self, shouldShow):
+		self.shouldShowProgress = shouldShow
+
+	def showChunkSummary(self):
+		if not self.fileSet.hasFiles():
+			return
+
+		lastPath = os.path.dirname(self.fileSet.paths[-1])
+		count = self.fileSet.getCount()
+		size = self.fileSet.getSize()
+		print("Processed: {} ({} files, {:.2f} MB)".format(lastPath, count, size))
 
 	def processChunk(self):
 		if not self.fileSet.hasFiles():
 			return
+
+		if self.shouldShowProgress:
+			self.showChunkSummary()
 
 		self.process()
 		self.fileSet.reset()
@@ -121,10 +137,17 @@ class GitProcessor(Processor):
 	def process(self):
 		addArgs = self.getAddCommandArgs()
 
-		for path in self.fileSet.paths:
+		for index, path in enumerate(self.fileSet.paths):
 			addArgs.append(path)
+
+			if self.shouldShowProgress and index % 10 == 0:
+				print('.', end='', flush=True)
+
 			self.runCommand(addArgs)
 			addArgs.pop()
+
+		if self.shouldShowProgress:
+			print('', flush=True)
 
 		self.runCommand(self.buildCommitCommandArgs('Add files'))
 
@@ -136,9 +159,11 @@ def main():
 	parser.add_argument('-s', '--size', help='Maximum size of a chunk (in MB)', default=300)
 	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', default=500)
 	parser.add_argument('-n', '--dry-run', action='store_true', help='Print commands that would be run without running them')
+	parser.add_argument('-p', '--progress', action='store_true', help='Print progress information as chunks are added')
 
 	args = parser.parse_args()
 	processor = GitProcessor(args.size, args.count, args.dry_run)
+	processor.setShouldShowProgress(args.progress)
 	processor.processPath(args.path)
 
 if __name__ == "__main__":
