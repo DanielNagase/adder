@@ -47,9 +47,16 @@ class Processor:
 		self.fileSet = FileSet(size, count)
 		self.isDryRun = isDryRun
 		self.shouldShowProgress = False
+		self.resumePath = None
 
 	def setShouldShowProgress(self, shouldShow):
 		self.shouldShowProgress = shouldShow
+
+	def setResumePath(self, path):
+		if path is None:
+			return
+
+		self.resumePath = path
 
 	def showChunkSummary(self):
 		if not self.fileSet.hasFiles():
@@ -91,10 +98,15 @@ class Processor:
 		entries = sorted(os.scandir(path), key=lambda entry: entry.name)
 
 		for entry in entries:
+			if self.resumePath and (len(self.resumePath) >= len(entry.path)):
+				if entry.is_dir() and entry.path.startswith(self.resumePath):
+					self.resumePath = None
+
 			if entry.is_dir():
 				self.visitPath(entry)
 			elif entry.is_file():
-				self.visitFile(entry)
+				if not self.resumePath:
+					self.visitFile(entry)
 
 	def visitFile(self, entry):
 		statResult = entry.stat()
@@ -160,10 +172,12 @@ def main():
 	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', default=500)
 	parser.add_argument('-n', '--dry-run', action='store_true', help='Print commands that would be run without running them')
 	parser.add_argument('-p', '--progress', action='store_true', help='Print progress information as chunks are added')
+	parser.add_argument('-r', '--resume-path', metavar='PATH', help='Resume from a given path, skipping paths before it')
 
 	args = parser.parse_args()
 	processor = GitProcessor(args.size, args.count, args.dry_run)
 	processor.setShouldShowProgress(args.progress)
+	processor.setResumePath(args.resume_path)
 	processor.processPath(args.path)
 
 if __name__ == "__main__":
