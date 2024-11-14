@@ -183,8 +183,8 @@ def main():
 		description='A tool for adding files to git in chunks'
 	)
 	parser.add_argument('path', help='Path to add')
-	parser.add_argument('-s', '--size', help='Maximum size of a chunk (in MB)', type=int, default=300)
-	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', type=int, default=500)
+	parser.add_argument('-s', '--size', help='Maximum size of a chunk (in MB)', type=int, default=500)
+	parser.add_argument('-c', '--count', help='Maximum number of files in a chunk', type=int, default=1000)
 	parser.add_argument('-n', '--dry-run', action='store_true', help='Print commands that would be run without running them')
 	parser.add_argument('-p', '--progress', action='store_true', help='Print progress information as chunks are added')
 	parser.add_argument('-r', '--resume-path', metavar='PATH', help='Resume from a given path, skipping paths before it')
