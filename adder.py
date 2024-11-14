@@ -150,11 +150,10 @@ class GitProcessor(Processor):
 		addArgs = self.getAddCommandArgs()
 
 		for index, path in enumerate(self.fileSet.paths):
-			addArgs.append(path)
-
 			if self.shouldShowProgress and index % 10 == 0:
 				print('.', end='', flush=True)
 
+			addArgs.append(path)
 			self.runCommand(addArgs)
 			addArgs.pop()
 
