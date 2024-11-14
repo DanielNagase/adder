@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, os, subprocess
+import argparse, math, os, subprocess
 
 class FileSet:
 	'''Class for a set of files'''
@@ -147,18 +147,33 @@ class GitProcessor(Processor):
 			errorString = error.stderr.decode()
 			print("Command failed:\n {}".format(errorString), end='')
 
+	def printChunkProgress(self, index, length):
+		if not self.shouldShowProgress:
+			return
+
+		fraction = 0.04
+		fractionAsCount = math.ceil(fraction * length)
+
+		if index % fractionAsCount == 0:
+			print('.', end='', flush=True)
+
+	def printChunkProgressFooter(self):
+		if not self.shouldShowProgress:
+			return
+
+		print('', flush=True)
+
 	def process(self):
 		addArgs = self.getAddCommandArgs()
 		addArgsLength = len(' '.join(addArgs))
+
 		# This is the maximum number of characters for a command in Windows 10.
 		maximumLength = 8192
 		currentBatchLength = addArgsLength
 		currentBatch = []
 
 		for index, path in enumerate(self.fileSet.paths):
-			if self.shouldShowProgress and index % 10 == 0:
-				print('.', end='', flush=True)
-
+			self.printChunkProgress(index, self.fileSet.getCount())
 			pathLength = len(path)
 
 			if (pathLength + currentBatchLength) <= maximumLength:
@@ -173,9 +188,7 @@ class GitProcessor(Processor):
 			self.runCommand([*addArgs, *currentBatch])
 			currentBatch = []
 
-		if self.shouldShowProgress:
-			print('', flush=True)
-
+		self.printChunkProgressFooter()
 		self.runCommand(self.buildCommitCommandArgs('Add files'))
 
 def main():
