@@ -114,6 +114,7 @@ class Processor:
 
 		if not didAdd:
 			self.processChunk()
+			self.fileSet.add(entry.path, statResult.st_size)
 
 class GitProcessor(Processor):
 	'''Class for adding files to git by using the command line'''
