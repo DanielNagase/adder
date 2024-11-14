@@ -148,14 +148,29 @@ class GitProcessor(Processor):
 
 	def process(self):
 		addArgs = self.getAddCommandArgs()
+		addArgsLength = len(' '.join(addArgs))
+		# This is the maximum number of characters for a command in Windows 10.
+		maximumLength = 8192
+		currentBatchLength = addArgsLength
+		currentBatch = []
 
 		for index, path in enumerate(self.fileSet.paths):
 			if self.shouldShowProgress and index % 10 == 0:
 				print('.', end='', flush=True)
 
-			addArgs.append(path)
-			self.runCommand(addArgs)
-			addArgs.pop()
+			pathLength = len(path)
+
+			if (pathLength + currentBatchLength) <= maximumLength:
+				currentBatchLength += pathLength
+				currentBatch.append(path)
+			else:
+				self.runCommand([*addArgs, *currentBatch])
+				currentBatchLength = addArgsLength + pathLength
+				currentBatch = [path]
+
+		if len(currentBatch) > 0:
+			self.runCommand([*addArgs, *currentBatch])
+			currentBatch = []
 
 		if self.shouldShowProgress:
 			print('', flush=True)
